@@ -1,0 +1,4 @@
+# Ignore overkill
+build
+# lib/*
+bin/*
