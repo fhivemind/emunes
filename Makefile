@@ -33,5 +33,3 @@ clean:
 # Tests
 tester:
   $(CC) $(CFLAGS) test/tester.cpp $(INC) $(LIB) -o bin/tester
-
-.PHONY: clean
