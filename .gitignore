@@ -2,3 +2,7 @@
 build
 # lib/*
 bin/*
+
+# Code editors
+.vs/
+.vscode/
