@@ -13,7 +13,7 @@ public:
 public:
 	// Data
 	CPU cpu;
-	std::array<u8, 64 * 1024> ram = {0};
+	u8 ram[64 * 1024] = { 0 };
 
 	// Memory controllers
 	void write(u16, u8);
@@ -24,5 +24,6 @@ private:
 	u16 addr_low{ 0x0000 };
 	u16 addr_high{ 0xFFFF };
 
+	// Verify memory range
 	inline void checkMemRange(u16);
 };

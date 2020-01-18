@@ -187,7 +187,7 @@ void CPU::write(u16 addr, u8 val)
 void CPU::reset()
 {
 	addr_abs = 0xFFFC;
-	pc = (read(addr_abs + 0) << 8) | read(addr_abs + 1);
+	pc = ((u16)read(addr_abs + 1) << 8) | (u16)read(addr_abs + 0);
 
 	// Reset internal registers
 	a = 0;
@@ -202,7 +202,7 @@ void CPU::reset()
 	fetched = 0x00;
 
 	// Perform clearence
-	cycles = 6;
+	cycles = 8;
 }
 
 // Interrupt
@@ -285,7 +285,7 @@ void CPU::clock()
 }
 
 // Checks if CPU instruction is finished
-bool CPU::completed() 
+bool CPU::completed()
 {
 	return cycles == 0;
 }
@@ -420,7 +420,7 @@ u8 CPU::IZY() {
 
 	u16 low = read(t & 0x00FF);
 	u16 high = read((t + 1) & 0x00FF);
-	
+
 	addr_abs = ((high << 8) | low) + y;
 	return (addr_abs & 0xFF00) != (high << 8);
 }
@@ -490,7 +490,7 @@ u8 CPU::BCC() {
 u8 CPU::BCS() {
 	if (getFlag(FLAGS::C) == 1)
 		op_branch();
-	return 0;	
+	return 0;
 }
 
 u8 CPU::BEQ() {
@@ -746,14 +746,14 @@ u8 CPU::LSR() {
 
 u8 CPU::NOP() {
 	switch (opcode) {
-		case 0x1C:
-		case 0x3C:
-		case 0x5C:
-		case 0x7C:
-		case 0xDC:
-		case 0xFC:
-			return 1;
-			break;
+	case 0x1C:
+	case 0x3C:
+	case 0x5C:
+	case 0x7C:
+	case 0xDC:
+	case 0xFC:
+		return 1;
+		break;
 	}
 	return 0;
 }
@@ -791,7 +791,7 @@ u8 CPU::PLA() {
 
 	setFlag(FLAGS::Z, a == 0);
 	setFlag(FLAGS::N, a & 0x80);
-	
+
 	return 0;
 }
 
@@ -812,7 +812,7 @@ u8 CPU::ROL() {
 	setFlag(FLAGS::C, res & 0xFF00);
 	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
 	setFlag(FLAGS::N, res & 0x0080);
-	
+
 	if (instrTable[opcode].addr == &CPU::IMP)
 		a = res & 0x00FF;
 	else

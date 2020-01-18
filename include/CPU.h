@@ -88,7 +88,7 @@ private:
 
 	// ============================================ Control
 	// Bus link
-	Bus *bus = nullptr;
+	Bus* bus = nullptr;
 	u8 read(u16);
 	void write(u16, u8);
 
@@ -100,8 +100,8 @@ private:
 	u8 fetch();
 
 	// Opcode calculation helpers
-	typedef u8 (CPU::* CodeExec)(void);
-	typedef u8 (CPU::* AddrExec)(void);
+	typedef u8(CPU::* CodeExec)(void);
+	typedef u8(CPU::* AddrExec)(void);
 	struct INSTRUCTION
 	{
 		std::string name;
@@ -140,4 +140,8 @@ private:
 	u8 STX();	u8 STY();	u8 TAX();	u8 TAY();
 	u8 TSX();	u8 TXA();	u8 TXS();	u8 TYA();
 	u8 NON();
+
+// Not implemented
+public:
+	std::map<u16, std::string> test(u16, u16);
 };
