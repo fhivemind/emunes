@@ -11,20 +11,6 @@
 // Include forward Bus
 class Bus;
 
-
-// Status register
-enum FLAGS
-{
-	C = (1 << 0),
-	Z = (1 << 1),
-	I = (1 << 2),
-	D = (1 << 3),
-	B = (1 << 4),
-	U = (1 << 5),
-	V = (1 << 6),
-	N = (1 << 7),
-};
-
 // Addressing modes
 enum ADDRESSING_MODES {
 	RELATIVE = 0,
@@ -50,6 +36,20 @@ public:
 
 public:
 	// ============================================ Control
+
+	// Status register
+	enum FLAGS
+	{
+		C = (1 << 0),
+		Z = (1 << 1),
+		I = (1 << 2),
+		D = (1 << 3),
+		B = (1 << 4),
+		U = (1 << 5),
+		V = (1 << 6),
+		N = (1 << 7),
+	};
+
 	// Registers
 	inline u8 A() { return a; }
 	inline u8 X() { return x; }
@@ -105,14 +105,14 @@ private:
 	struct INSTRUCTION
 	{
 		std::string name;
-		AddrExec addr = nullptr;
 		CodeExec code = nullptr;
+		AddrExec addr = nullptr;
 		u8 cycles = 0;
 	};
-	
+
 	// Default instruction table
-	INSTRUCTION instrTable[256] = { INSTRUCTION { "NON", &CPU::NON, &CPU::IMP, 2 } };
-		
+	INSTRUCTION instrTable[256];
+
 	// Addressing modes
 	u8 IMP();	u8 IMM();
 	u8 ZP0();	u8 ZPX();
@@ -124,7 +124,7 @@ private:
 	// Opcode helpers
 	void op_branch();
 
-	// Opcodes 
+	// Opcodes
 	u8 ADC();	u8 AND();	u8 ASL();	u8 BCC();
 	u8 BCS();	u8 BEQ();	u8 BIT();	u8 BMI();
 	u8 BNE();	u8 BPL();	u8 BRK();	u8 BVC();

@@ -5,6 +5,9 @@
 
 CPU::CPU()
 {
+	for (int i = 0; i < 256; i++)
+		instrTable[i] = { INSTRUCTION { "NON", &CPU::NON, &CPU::IMP, 2 } };
+
 	/* INSTRUCTIONs */
 	instrTable[0x00] = INSTRUCTION{ "BRK impl", &CPU::BRK, &CPU::IMP, 7 };
 	instrTable[0x01] = INSTRUCTION{ "ORA X,ind", &CPU::ORA, &CPU::IZX, 6 };
