@@ -7,7 +7,9 @@
 #include <vector>
 
 #include "core.h"
-#include "Bus.h"
+
+// Include forward Bus
+class Bus;
 
 
 // Status register
@@ -64,7 +66,7 @@ public:
 	bool completed();	// Instruction state
 
 	// Bus link
-	void connectBus(Bus* bus) { bus->cpu = *this; }
+	void connectBus(Bus*);
 
 private:
 	// ============================================ Data
@@ -86,7 +88,7 @@ private:
 
 	// ============================================ Control
 	// Bus link
-	Bus* bus{ nullptr };
+	Bus *bus = nullptr;
 	u8 read(u16);
 	void write(u16, u8);
 
@@ -109,7 +111,7 @@ private:
 	};
 	
 	// Default instruction table
-	INSTRUCTION instrTable[256] = { INSTRUCTION { "NON", NON, IMP, 2 } };
+	INSTRUCTION instrTable[256] = { INSTRUCTION { "NON", &CPU::NON, &CPU::IMP, 2 } };
 		
 	// Addressing modes
 	u8 IMP();	u8 IMM();
