@@ -202,7 +202,7 @@ void CPU::reset()
 // Interrupt
 void CPU::irq()
 {
-	if (getFlag(I) == 0)
+	if (getFlag(FLAGS::I) == 0)
 	{
 		// Push pc lower and upper to stack
 		write(0x0100 + stackp, (pc >> 8) & 0x00FF);
@@ -444,6 +444,8 @@ u8 CPU::AND() {
 
 	setFlag(FLAGS::Z, a == 0);
 	setFlag(FLAGS::N, a & 0x80);
+
+	return 1;
 }
 
 u8 CPU::ASL() {
@@ -464,33 +466,409 @@ u8 CPU::ASL() {
 	return 0;
 }
 
+// Helper function for pc = address
+void CPU::op_branch() {
+	cycles++;
+
+	addr_abs = pc + addr_rel;
+	cycles += (addr_abs & 0xFF00) != (pc & 0xFF00);
+	pc = addr_abs;
+}
+
 u8 CPU::BCC() {
-	if (getFlag(FLAGS::C) == 0) {
-		cycles++;
+	if (getFlag(FLAGS::C) == 0)
+		op_branch();
+	return 0;
+}
 
-		addr_abs = pc + addr_rel;
-		cycles += (addr_abs & 0xFF00) != (pc & 0xFF00);
-		pc = addr_abs;
-	}
+u8 CPU::BCS() {
+	if (getFlag(FLAGS::C) == 1)
+		op_branch();
+	return 0;	
+}
 
+u8 CPU::BEQ() {
+	if (getFlag(FLAGS::Z) == 1)
+		op_branch();
+	return 0;
+}
+
+u8 CPU::BIT() {
+	fetch();
+	u8 res = a & fetched;
+
+	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
+	setFlag(FLAGS::N, fetched & (1 << 7));
+	setFlag(FLAGS::V, fetched & (1 << 6));
+	return 0;
+}
+
+u8 CPU::BMI() {
+	if (getFlag(FLAGS::N) == 1)
+		op_branch();
 	return 0;
 }
 
 
-u8 CPU::BCS() {
-	if (getFlag(FLAGS::C) == 1) {
-		cycles++;
+u8 CPU::BNE() {
+	if (getFlag(FLAGS::Z) == 0)
+		op_branch();
+	return 0;
+}
 
-		addr_abs = pc + addr_rel;
-		cycles += (addr_abs & 0xFF00) != (pc & 0xFF00);
-		pc = addr_abs;
+
+u8 CPU::BPL() {
+	if (getFlag(FLAGS::N) == 0)
+		op_branch();
+	return 0;
+}
+
+// TODO: Implement Progam Sourced Interrupt
+u8 CPU::BRK() {}
+
+u8 CPU::BVC() {
+	if (getFlag(FLAGS::V) == 0)
+		op_branch();
+	return 0;
+}
+
+u8 CPU::BVS() {
+	if (getFlag(FLAGS::V) == 1)
+		op_branch();
+	return 0;
+}
+
+u8 CPU::CLC() {
+	setFlag(FLAGS::C, false);
+	return 0;
+}
+
+u8 CPU::CLD() {
+	setFlag(FLAGS::D, false);
+	return 0;
+}
+
+u8 CPU::CLI() {
+	setFlag(FLAGS::I, false);
+	return 0;
+}
+
+u8 CPU::CLV() {
+	setFlag(FLAGS::V, false);
+	return 0;
+}
+
+u8 CPU::CMP() {
+	fetch();
+	u16 res = (u16)a - (u16)fetched;
+
+	setFlag(FLAGS::C, a >= fetched);
+	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
+	setFlag(FLAGS::N, res & 0x0080);
+
+	return 1;
+}
+
+u8 CPU::CPX() {
+	fetch();
+	u16 res = (u16)x - (u16)fetched;
+
+	setFlag(FLAGS::C, x >= fetched);
+	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
+	setFlag(FLAGS::N, res & 0x0080);
+
+	return 0;
+}
+
+u8 CPU::CPY() {
+	fetch();
+	u16 res = (u16)y - (u16)fetched;
+
+	setFlag(FLAGS::C, y >= fetched);
+	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
+	setFlag(FLAGS::N, res & 0x0080);
+
+	return 0;
+}
+
+u8 CPU::DEC() {
+	fetch();
+	u16 res = fetched - 1;
+	write(addr_abs, res & 0x00FF);
+
+	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
+	setFlag(FLAGS::N, res & 0x0080);
+
+	return 0;
+}
+
+u8 CPU::DEX() {
+	--x;
+
+	setFlag(FLAGS::Z, x == 0);
+	setFlag(FLAGS::N, x & 0x80);
+
+	return 0;
+}
+
+u8 CPU::DEY() {
+	--y;
+
+	setFlag(FLAGS::Z, y == 0);
+	setFlag(FLAGS::N, y & 0x80);
+
+	return 0;
+}
+
+u8 CPU::EOR() {
+	fetch();
+	a ^= fetched;
+
+	setFlag(FLAGS::Z, a == 0);
+	setFlag(FLAGS::N, a & 0x80);
+
+	return 1;
+}
+
+u8 CPU::INC() {
+	fetch();
+	u16 res = fetched + 1;
+	write(addr_abs, res & 0x00FF);
+
+	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
+	setFlag(FLAGS::N, res & 0x0080);
+
+	return 0;
+}
+
+u8 CPU::INX() {
+	++x;
+
+	setFlag(FLAGS::Z, x == 0);
+	setFlag(FLAGS::N, x & 0x80);
+
+	return 0;
+}
+
+u8 CPU::INY() {
+	++y;
+
+	setFlag(FLAGS::Z, y == 0);
+	setFlag(FLAGS::N, y & 0x80);
+}
+
+u8 CPU::JMP() {
+	pc = addr_abs;
+	return 0;
+}
+
+u8 CPU::JSR() {
+	pc--;
+
+	write(0x0100 + stackp, (pc >> 8) & 0x00FF);
+	stackp--;
+	write(0x0100 + stackp, pc & 0x00FF);
+	stackp--;
+
+	pc = addr_abs;
+	return 0;
+}
+
+u8 CPU::LDA() {
+	fetch();
+	a = fetched;
+
+	setFlag(FLAGS::Z, a == 0);
+	setFlag(FLAGS::N, a & 0x80);
+
+	return 1;
+}
+
+u8 CPU::LDX() {
+	fetch();
+	x = fetched;
+
+	setFlag(FLAGS::Z, x == 0);
+	setFlag(FLAGS::N, x & 0x80);
+
+	return 1;
+}
+
+u8 CPU::LDY() {
+	fetch();
+	y = fetched;
+
+	setFlag(FLAGS::Z, y == 0);
+	setFlag(FLAGS::N, y & 0x80);
+
+	return 1;
+}
+
+// TODO: Implement Left shift register
+u8 CPU::LSR() {
+}
+
+u8 CPU::NOP() {
+	switch (opcode) {
+		case 0x1C:
+		case 0x3C:
+		case 0x5C:
+		case 0x7C:
+		case 0xDC:
+		case 0xFC:
+			return 1;
+			break;
 	}
+	return 0;
 }
 
-u8 CPU::BEQ() {
+u8 CPU::ORA() {
+	fetch();
+	a = a | fetched;
+
+	setFlag(FLAGS::Z, a == 0);
+	setFlag(FLAGS::N, a & 0x80);
+
+	return 1;
+}
+
+u8 CPU::PHA() {
+	write(0x0100 + stackp, a);
+	stackp--;
+
+	return 0;
+}
+
+u8 CPU::PHP() {
+	write(0x0100 + stackp, status | FLAGS::B | FLAGS::U);
+	stackp--;
+
+	setFlag(FLAGS::B, false);
+	setFlag(FLAGS::U, false);
+
+	return 0;
+}
+
+u8 CPU::PLA() {
+	stackp++;
+	a = read(0x0100 + stackp);
+
+	setFlag(FLAGS::Z, a == 0);
+	setFlag(FLAGS::N, a & 0x80);
+	
+	return 0;
+}
+
+u8 CPU::PLP() {
+	stackp++;
+	status = read(0x0100 + stackp);
+
+	setFlag(FLAGS::U, true);
+
+	return 0;
+}
+
+// TODO: Implement following op functions
+u8 CPU::ROL() {
 
 }
 
-u8 CPU::BIT();
+u8 CPU::ROR() {
 
-u8 CPU::BMI();
+}
+
+u8 CPU::RTI() {
+
+}
+
+u8 CPU::RTS() {
+
+}
+
+u8 CPU::SBC() {
+
+}
+
+u8 CPU::SEC() {
+	setFlag(FLAGS::C, true);
+	return 0;
+}
+
+u8 CPU::SED() {
+	setFlag(FLAGS::D, true);
+	return 0;
+}
+
+u8 CPU::SEI() {
+	setFlag(FLAGS::I, true);
+	return 0;
+}
+
+u8 CPU::STA() {
+	write(addr_abs, a);
+	return 0;
+}
+
+u8 CPU::STX() {
+	write(addr_abs, x);
+	return 0;
+}
+
+u8 CPU::STY() {
+	write(addr_abs, y);
+	return 0;
+}
+
+u8 CPU::TAX() {
+	x = a;
+
+	setFlag(FLAGS::Z, x == 0);
+	setFlag(FLAGS::N, x & 0x80);
+
+	return 0;
+}
+
+u8 CPU::TAY() {
+	y = a;
+
+	setFlag(FLAGS::Z, y == 0);
+	setFlag(FLAGS::N, y & 0x80);
+
+	return 0;
+}
+
+u8 CPU::TSX() {
+	x = stackp;
+
+	setFlag(FLAGS::Z, x == 0);
+	setFlag(FLAGS::N, x & 0x80);
+
+	return 0;
+}
+
+u8 CPU::TXA() {
+	a = x;
+
+	setFlag(FLAGS::Z, a == 0);
+	setFlag(FLAGS::N, a & 0x80);
+
+	return 0;
+}
+
+u8 CPU::TXS() {
+	stackp = x;
+	return 0;
+}
+
+u8 CPU::TYA() {
+	a = y;
+
+	setFlag(FLAGS::Z, a == 0);
+	setFlag(FLAGS::N, a & 0x80);
+
+	return 0;
+}
+
+u8 CPU::NON() {
+	return 0;
+}

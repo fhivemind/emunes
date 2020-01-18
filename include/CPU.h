@@ -120,7 +120,7 @@ private:
 	u8 IZX();	u8 IZY();
 
 	// Opcode helpers
-	u8 op_branch();
+	void op_branch();
 
 	// Opcodes 
 	u8 ADC();	u8 AND();	u8 ASL();	u8 BCC();
