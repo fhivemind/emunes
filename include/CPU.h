@@ -1,12 +1,13 @@
 #pragma once
 
-#include "core.h"
-#include "Bus.h"
 #include <cstdint>
 #include <functional>
 #include <string>
 #include <map>
 #include <vector>
+
+#include "core.h"
+#include "Bus.h"
 
 
 // Status register
@@ -63,7 +64,7 @@ public:
 	bool completed();	// Instruction state
 
 	// Bus link
-	void connectBus(Bus*);
+	void connectBus(Bus* bus) { bus->cpu = *this; }
 
 private:
 	// ============================================ Data
@@ -96,6 +97,20 @@ private:
 	// Data read
 	u8 fetch();
 
+	// Opcode calculation helpers
+	typedef u8 (CPU::* CodeExec)(void);
+	typedef u8 (CPU::* AddrExec)(void);
+	struct INSTRUCTION
+	{
+		std::string name;
+		AddrExec addr = nullptr;
+		CodeExec code = nullptr;
+		u8 cycles = 0;
+	};
+	
+	// Default instruction table
+	INSTRUCTION instrTable[256] = { INSTRUCTION { "NON", NON, IMP, 2 } };
+		
 	// Addressing modes
 	u8 IMP();	u8 IMM();
 	u8 ZP0();	u8 ZPX();
@@ -104,7 +119,10 @@ private:
 	u8 ABY();	u8 IND();
 	u8 IZX();	u8 IZY();
 
-	// Opcodes
+	// Opcode helpers
+	u8 op_branch();
+
+	// Opcodes 
 	u8 ADC();	u8 AND();	u8 ASL();	u8 BCC();
 	u8 BCS();	u8 BEQ();	u8 BIT();	u8 BMI();
 	u8 BNE();	u8 BPL();	u8 BRK();	u8 BVC();
