@@ -1,7 +1,9 @@
 #pragma once
 #include <array>
 
-#include "CPU.h"
+#include "cpu.h"
+#include "ppu.h"
+#include "cartridge.h"
 #include "core.h"
 
 class Bus
@@ -13,13 +15,26 @@ public:
 public:
 	// Data
 	CPU cpu;
-	u8 ram[64 * 1024] = { 0 };
+	PPU ppu;
+	Cartridge* cartridge;
+	u8  ram[2048] = { 0 };
 
-	// Memory controllers
+public:
+	// NES Control
+	void connectCartridge(Cartridge*);
+	void reset();
+	void clock();
+
+	// IO controllers
+	template <typename T>
 	void write(u16, u8);
-	u8 read(u16, bool readOnly = false);
+	template <typename T>
+	u8   read(u16, bool _ = false);
 
 private:
+	// Clock counter
+	u32 clockCounter{ 0 };
+
 	// Memory bounds
 	u16 addr_low{ 0x0000 };
 	u16 addr_high{ 0xFFFF };

@@ -1,4 +1,4 @@
-#include "Bus.h"
+#include "bus.h"
 #include <stdexcept>
 
 // ============================================ CTORS
@@ -14,6 +14,7 @@ Bus::~Bus() {}
 // ============================================ MEM CONTROL
 
 // Write to memory
+template <typename T>
 void Bus::write(u16 addr, u8 data)
 {
 	checkMemRange(addr);
@@ -21,6 +22,7 @@ void Bus::write(u16 addr, u8 data)
 }
 
 // Read from memory
+template <typename T>
 u8 Bus::read(u16 addr, bool readOnly)
 {
 	checkMemRange(addr);

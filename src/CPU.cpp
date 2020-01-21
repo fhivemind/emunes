@@ -1,5 +1,5 @@
-#include "CPU.h"
-#include "Bus.h"
+#include "cpu.h"
+#include "bus.h"
 
 // ============================================ CTORS
 
@@ -172,13 +172,13 @@ void CPU::connectBus(Bus* _bus) {
 // Reads an 8-bit byte from the bus, located at the specified 16-bit address
 u8 CPU::read(u16 addr)
 {
-	return bus->read(addr);
+	return bus->read<CPU>(addr);
 }
 
 // Writes a byte to the bus at the specified address
 void CPU::write(u16 addr, u8 val)
 {
-	bus->write(addr, val);
+	bus->write<CPU>(addr, val);
 }
 
 // ============================================ EXTERNAL INPUTS
