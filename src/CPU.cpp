@@ -204,7 +204,7 @@ void CPU::reset()
 // Interrupt
 void CPU::irq()
 {
-	if (getFlag(FLAGS::I) == 0)
+	if (I() == 0)
 	{
 		// Push pc lower and upper to stack
 		write(0x0100 + stackp, (pc >> 8) & 0x00FF);
@@ -213,9 +213,9 @@ void CPU::irq()
 		stackp--;
 
 		// Push status to stack
-		setFlag(B, 0);
-		setFlag(U, 1);
-		setFlag(I, 1);
+		B(false);
+		U(true);
+		I(true);
 		write(0x0100 + stackp, status);
 		stackp--;
 
@@ -240,9 +240,9 @@ void CPU::nmi()
 	stackp--;
 
 	// Push status to stack
-	setFlag(B, 0);
-	setFlag(U, 1);
-	setFlag(I, 1);
+	B(false);
+	U(true);
+	I(true);
 	write(0x0100 + stackp, status);
 	stackp--;
 
@@ -262,7 +262,7 @@ void CPU::clock()
 	{
 		// Read instruction
 		opcode = read(pc);
-		setFlag(U, true);
+		U(true);
 		pc++;
 
 		// Get instruction data
@@ -274,14 +274,14 @@ void CPU::clock()
 		cycles += (add1 & add2);
 
 		// Unused back to one
-		setFlag(U, true);
+		U(true);
 	}
 	clock_count++;
 	cycles--;
 }
 
 // Checks if CPU instruction is finished
-bool CPU::completed()
+inline bool CPU::completed()
 {
 	return cycles == 0;
 }
@@ -289,13 +289,13 @@ bool CPU::completed()
 // ============================================ FLAGS
 
 // Gets the Status Flag
-u8 CPU::getFlag(FLAGS f)
+inline u8 CPU::getFlag(FLAGS f)
 {
 	return ((status & f) > 0) ? 1 : 0;
 }
 
 // Sets the Status Flag
-void CPU::setFlag(FLAGS f, bool v)
+inline void CPU::setFlag(FLAGS f, bool v)
 {
 	if (v)
 		status |= f;
@@ -306,7 +306,7 @@ void CPU::setFlag(FLAGS f, bool v)
 // ============================================ ADDRESSING MODES
 
 // Fetches data from memory
-u8 CPU::fetch()
+inline u8 CPU::fetch()
 {
 	if (instrTable[opcode].addr != &CPU::IMP)
 		fetched = read(addr_abs);
@@ -440,13 +440,13 @@ u8 CPU::IZY()
 u8 CPU::ADC()
 {
 	fetch();
-	u16 res = (u16)a + (u16)fetched + (u16)getFlag(FLAGS::C);
+	u16 res = (u16)a + (u16)fetched + (u16)C();
 
 	// Set Flags
-	setFlag(FLAGS::C, res > 255);
-	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
-	setFlag(FLAGS::V, (~((u16)a ^ (u16)fetched) & ((u16)a ^ (u16)res)) & 0x0080);
-	setFlag(FLAGS::N, res & 0x0080);
+	C(res > 255);
+	Z((res & 0x00FF) == 0);
+	V((~((u16)a ^ (u16)fetched) & ((u16)a ^ (u16)res)) & 0x0080);
+	N(res & 0x0080);
 
 	// Load in accumulator
 	a = res & 0x00FF;
@@ -459,8 +459,8 @@ u8 CPU::AND()
 	fetch();
 	a = a & fetched;
 
-	setFlag(FLAGS::Z, a == 0);
-	setFlag(FLAGS::N, a & 0x80);
+	Z(a == 0);
+	N(a & 0x80);
 
 	return 1;
 }
@@ -471,9 +471,9 @@ u8 CPU::ASL()
 	u16 res = (u16)fetched << 1;
 
 	// Set flags
-	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
-	setFlag(FLAGS::N, res & 0x80);
-	setFlag(FLAGS::C, (res & 0xFF00) > 0);
+	Z((res & 0x00FF) == 0);
+	N(res & 0x80);
+	C((res & 0xFF00) > 0);
 
 	// Save to memory or accumulator
 	if (instrTable[opcode].addr == &CPU::IMP)
@@ -496,21 +496,21 @@ void CPU::op_branch()
 
 u8 CPU::BCC()
 {
-	if (getFlag(FLAGS::C) == 0)
+	if (C() == 0)
 		op_branch();
 	return 0;
 }
 
 u8 CPU::BCS()
 {
-	if (getFlag(FLAGS::C) == 1)
+	if (C() == 1)
 		op_branch();
 	return 0;
 }
 
 u8 CPU::BEQ()
 {
-	if (getFlag(FLAGS::Z) == 1)
+	if (Z() == 1)
 		op_branch();
 	return 0;
 }
@@ -520,29 +520,29 @@ u8 CPU::BIT()
 	fetch();
 	u8 res = a & fetched;
 
-	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
-	setFlag(FLAGS::N, fetched & (1 << 7));
-	setFlag(FLAGS::V, fetched & (1 << 6));
+	Z((res & 0x00FF) == 0);
+	N(fetched & (1 << 7));
+	V(fetched & (1 << 6));
 	return 0;
 }
 
 u8 CPU::BMI()
 {
-	if (getFlag(FLAGS::N) == 1)
+	if (N() == 1)
 		op_branch();
 	return 0;
 }
 
 u8 CPU::BNE()
 {
-	if (getFlag(FLAGS::Z) == 0)
+	if (Z() == 0)
 		op_branch();
 	return 0;
 }
 
 u8 CPU::BPL()
 {
-	if (getFlag(FLAGS::N) == 0)
+	if (N() == 0)
 		op_branch();
 	return 0;
 }
@@ -551,17 +551,17 @@ u8 CPU::BRK()
 {
 	pc++;
 
-	setFlag(FLAGS::I, true);
+	I(true);
 
 	write(0x0100 + stackp, (pc >> 8) & 0x00FF);
 	stackp--;
 	write(0x0100 + stackp, pc & 0x00FF);
 	stackp--;
 
-	setFlag(FLAGS::B, true);
+	B(true);
 	write(0x0100 + stackp, status);
 	stackp--;
-	setFlag(FLAGS::B, false);
+	B(false);
 
 	pc = (u16)read(0xFFFE) | ((u16)read(0xFFFF) << 8);
 	return 0;
@@ -569,39 +569,39 @@ u8 CPU::BRK()
 
 u8 CPU::BVC()
 {
-	if (getFlag(FLAGS::V) == 0)
+	if (V() == 0)
 		op_branch();
 	return 0;
 }
 
 u8 CPU::BVS()
 {
-	if (getFlag(FLAGS::V) == 1)
+	if (V() == 1)
 		op_branch();
 	return 0;
 }
 
 u8 CPU::CLC()
 {
-	setFlag(FLAGS::C, false);
+	C(false);
 	return 0;
 }
 
 u8 CPU::CLD()
 {
-	setFlag(FLAGS::D, false);
+	D(false);
 	return 0;
 }
 
 u8 CPU::CLI()
 {
-	setFlag(FLAGS::I, false);
+	I(false);
 	return 0;
 }
 
 u8 CPU::CLV()
 {
-	setFlag(FLAGS::V, false);
+	V(false);
 	return 0;
 }
 
@@ -610,9 +610,9 @@ u8 CPU::CMP()
 	fetch();
 	u16 res = (u16)a - (u16)fetched;
 
-	setFlag(FLAGS::C, a >= fetched);
-	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
-	setFlag(FLAGS::N, res & 0x0080);
+	C(a >= fetched);
+	Z((res & 0x00FF) == 0);
+	N(res & 0x0080);
 
 	return 1;
 }
@@ -622,9 +622,9 @@ u8 CPU::CPX()
 	fetch();
 	u16 res = (u16)x - (u16)fetched;
 
-	setFlag(FLAGS::C, x >= fetched);
-	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
-	setFlag(FLAGS::N, res & 0x0080);
+	C(x >= fetched);
+	Z((res & 0x00FF) == 0);
+	N(res & 0x0080);
 
 	return 0;
 }
@@ -634,9 +634,9 @@ u8 CPU::CPY()
 	fetch();
 	u16 res = (u16)y - (u16)fetched;
 
-	setFlag(FLAGS::C, y >= fetched);
-	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
-	setFlag(FLAGS::N, res & 0x0080);
+	C(y >= fetched);
+	Z((res & 0x00FF) == 0);
+	N(res & 0x0080);
 
 	return 0;
 }
@@ -647,8 +647,8 @@ u8 CPU::DEC()
 	u16 res = fetched - 1;
 	write(addr_abs, res & 0x00FF);
 
-	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
-	setFlag(FLAGS::N, res & 0x0080);
+	Z((res & 0x00FF) == 0);
+	N(res & 0x0080);
 
 	return 0;
 }
@@ -657,8 +657,8 @@ u8 CPU::DEX()
 {
 	--x;
 
-	setFlag(FLAGS::Z, x == 0);
-	setFlag(FLAGS::N, x & 0x80);
+	Z(x == 0);
+	N(x & 0x80);
 
 	return 0;
 }
@@ -667,8 +667,8 @@ u8 CPU::DEY()
 {
 	--y;
 
-	setFlag(FLAGS::Z, y == 0);
-	setFlag(FLAGS::N, y & 0x80);
+	Z(y == 0);
+	N(y & 0x80);
 
 	return 0;
 }
@@ -678,8 +678,8 @@ u8 CPU::EOR()
 	fetch();
 	a ^= fetched;
 
-	setFlag(FLAGS::Z, a == 0);
-	setFlag(FLAGS::N, a & 0x80);
+	Z(a == 0);
+	N(a & 0x80);
 
 	return 1;
 }
@@ -690,8 +690,8 @@ u8 CPU::INC()
 	u16 res = fetched + 1;
 	write(addr_abs, res & 0x00FF);
 
-	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
-	setFlag(FLAGS::N, res & 0x0080);
+	Z((res & 0x00FF) == 0);
+	N(res & 0x0080);
 
 	return 0;
 }
@@ -700,8 +700,8 @@ u8 CPU::INX()
 {
 	++x;
 
-	setFlag(FLAGS::Z, x == 0);
-	setFlag(FLAGS::N, x & 0x80);
+	Z(x == 0);
+	N(x & 0x80);
 
 	return 0;
 }
@@ -710,8 +710,8 @@ u8 CPU::INY()
 {
 	++y;
 
-	setFlag(FLAGS::Z, y == 0);
-	setFlag(FLAGS::N, y & 0x80);
+	Z(y == 0);
+	N(y & 0x80);
 
 	return 0;
 }
@@ -740,8 +740,8 @@ u8 CPU::LDA()
 	fetch();
 	a = fetched;
 
-	setFlag(FLAGS::Z, a == 0);
-	setFlag(FLAGS::N, a & 0x80);
+	Z(a == 0);
+	N(a & 0x80);
 
 	return 1;
 }
@@ -751,8 +751,8 @@ u8 CPU::LDX()
 	fetch();
 	x = fetched;
 
-	setFlag(FLAGS::Z, x == 0);
-	setFlag(FLAGS::N, x & 0x80);
+	Z(x == 0);
+	N(x & 0x80);
 
 	return 1;
 }
@@ -762,8 +762,8 @@ u8 CPU::LDY()
 	fetch();
 	y = fetched;
 
-	setFlag(FLAGS::Z, y == 0);
-	setFlag(FLAGS::N, y & 0x80);
+	Z(y == 0);
+	N(y & 0x80);
 
 	return 1;
 }
@@ -773,9 +773,9 @@ u8 CPU::LSR()
 	fetch();
 	u16 res = fetched >> 1;
 
-	setFlag(FLAGS::C, fetched & 0x0001);
-	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
-	setFlag(FLAGS::C, res & 0x0080);
+	C(fetched & 0x0001);
+	Z((res & 0x00FF) == 0);
+	C(res & 0x0080);
 
 	if (instrTable[opcode].addr == &CPU::IMP)
 		a = res & 0x00FF;
@@ -806,8 +806,8 @@ u8 CPU::ORA()
 	fetch();
 	a = a | fetched;
 
-	setFlag(FLAGS::Z, a == 0);
-	setFlag(FLAGS::N, a & 0x80);
+	Z(a == 0);
+	N(a & 0x80);
 
 	return 1;
 }
@@ -825,8 +825,8 @@ u8 CPU::PHP()
 	write(0x0100 + stackp, status | FLAGS::B | FLAGS::U);
 	stackp--;
 
-	setFlag(FLAGS::B, false);
-	setFlag(FLAGS::U, false);
+	B(false);
+	U(false);
 
 	return 0;
 }
@@ -836,8 +836,8 @@ u8 CPU::PLA()
 	stackp++;
 	a = read(0x0100 + stackp);
 
-	setFlag(FLAGS::Z, a == 0);
-	setFlag(FLAGS::N, a & 0x80);
+	Z(a == 0);
+	N(a & 0x80);
 
 	return 0;
 }
@@ -847,7 +847,7 @@ u8 CPU::PLP()
 	stackp++;
 	status = read(0x0100 + stackp);
 
-	setFlag(FLAGS::U, true);
+	U(true);
 
 	return 0;
 }
@@ -856,11 +856,11 @@ u8 CPU::PLP()
 u8 CPU::ROL()
 {
 	fetch();
-	u16 res = (u16)(fetched << 1) | getFlag(FLAGS::C);
+	u16 res = (u16)(fetched << 1) | C();
 
-	setFlag(FLAGS::C, res & 0xFF00);
-	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
-	setFlag(FLAGS::N, res & 0x0080);
+	C(res & 0xFF00);
+	Z((res & 0x00FF) == 0);
+	N(res & 0x0080);
 
 	if (instrTable[opcode].addr == &CPU::IMP)
 		a = res & 0x00FF;
@@ -873,11 +873,11 @@ u8 CPU::ROL()
 u8 CPU::ROR()
 {
 	fetch();
-	u16 res = (u16)(getFlag(FLAGS::C) << 7) | (fetched << 1);
+	u16 res = (u16)(C() << 7) | (fetched << 1);
 
-	setFlag(FLAGS::C, fetched & 0x01);
-	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
-	setFlag(FLAGS::N, res & 0x0080);
+	C(fetched & 0x01);
+	Z((res & 0x00FF) == 0);
+	N(res & 0x0080);
 
 	if (instrTable[opcode].addr == &CPU::IMP)
 		a = res & 0x00FF;
@@ -921,13 +921,13 @@ u8 CPU::SBC()
 
 	// Perform complement addition
 	u16 value = ((u16)fetched) ^ 0x00FF;
-	u16 res = (u16)a + (u16)value + (u16)getFlag(FLAGS::C);
+	u16 res = (u16)a + (u16)value + (u16)C();
 
 	// Set Flags
-	setFlag(FLAGS::C, res & 0xFF00);
-	setFlag(FLAGS::Z, (res & 0x00FF) == 0);
-	setFlag(FLAGS::V, (res ^ (u16)a) & (res ^ value) & 0x0080);
-	setFlag(FLAGS::N, res & 0x0080);
+	C(res & 0xFF00);
+	Z((res & 0x00FF) == 0);
+	V((res ^ (u16)a) & (res ^ value) & 0x0080);
+	N(res & 0x0080);
 
 	// Load in accumulator
 	a = res & 0x00FF;
@@ -937,19 +937,19 @@ u8 CPU::SBC()
 
 u8 CPU::SEC()
 {
-	setFlag(FLAGS::C, true);
+	C(true);
 	return 0;
 }
 
 u8 CPU::SED()
 {
-	setFlag(FLAGS::D, true);
+	D(true);
 	return 0;
 }
 
 u8 CPU::SEI()
 {
-	setFlag(FLAGS::I, true);
+	I(true);
 	return 0;
 }
 
@@ -975,8 +975,8 @@ u8 CPU::TAX()
 {
 	x = a;
 
-	setFlag(FLAGS::Z, x == 0);
-	setFlag(FLAGS::N, x & 0x80);
+	Z(x == 0);
+	N(x & 0x80);
 
 	return 0;
 }
@@ -985,8 +985,8 @@ u8 CPU::TAY()
 {
 	y = a;
 
-	setFlag(FLAGS::Z, y == 0);
-	setFlag(FLAGS::N, y & 0x80);
+	Z(y == 0);
+	N(y & 0x80);
 
 	return 0;
 }
@@ -995,8 +995,8 @@ u8 CPU::TSX()
 {
 	x = stackp;
 
-	setFlag(FLAGS::Z, x == 0);
-	setFlag(FLAGS::N, x & 0x80);
+	Z(x == 0);
+	N(x & 0x80);
 
 	return 0;
 }
@@ -1005,8 +1005,8 @@ u8 CPU::TXA()
 {
 	a = x;
 
-	setFlag(FLAGS::Z, a == 0);
-	setFlag(FLAGS::N, a & 0x80);
+	Z(a == 0);
+	N(a & 0x80);
 
 	return 0;
 }
@@ -1021,8 +1021,8 @@ u8 CPU::TYA()
 {
 	a = y;
 
-	setFlag(FLAGS::Z, a == 0);
-	setFlag(FLAGS::N, a & 0x80);
+	Z(a == 0);
+	N(a & 0x80);
 
 	return 0;
 }

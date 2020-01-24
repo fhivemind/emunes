@@ -46,7 +46,7 @@ public:
 	void irq();		  // Interrupt Request
 	void reset();	 // Reset Interrupt
 	void clock();	 // Perform a clock cycle
-	bool completed(); // Instruction state
+	inline bool completed(); // Instruction state
 
 private:
 	// ============================================ Data
@@ -73,11 +73,30 @@ private:
 	void write(u16, u8);
 
 	// Status register control
-	u8 getFlag(FLAGS);
-	void setFlag(FLAGS, bool);
+	inline u8 getFlag(FLAGS);
+	inline void setFlag(FLAGS, bool);
+
+	// Flag helpers
+	inline bool N() { return getFlag(FLAGS::N); }
+	inline bool V() { return getFlag(FLAGS::V); }
+	inline bool U() { return getFlag(FLAGS::U); }
+	inline bool B() { return getFlag(FLAGS::B); }
+	inline bool D() { return getFlag(FLAGS::D); }
+	inline bool I() { return getFlag(FLAGS::I); }
+	inline bool Z() { return getFlag(FLAGS::Z); }
+	inline bool C() { return getFlag(FLAGS::C); }
+
+	inline void N(bool _v) { setFlag(FLAGS::N, _v); }
+	inline void V(bool _v) { setFlag(FLAGS::V, _v); }
+	inline void U(bool _v) { setFlag(FLAGS::U, _v); }
+	inline void B(bool _v) { setFlag(FLAGS::B, _v); }
+	inline void D(bool _v) { setFlag(FLAGS::D, _v); }
+	inline void I(bool _v) { setFlag(FLAGS::I, _v); }
+	inline void Z(bool _v) { setFlag(FLAGS::Z, _v); }
+	inline void C(bool _v) { setFlag(FLAGS::C, _v); }
 
 	// Data read
-	u8 fetch();
+	inline u8 fetch();
 
 	// Opcode calculation helpers
 	typedef u8 (CPU::*CodeExec)(void);
