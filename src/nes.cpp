@@ -1,2 +1,2 @@
 #include <stdexcept>
-#include "bus.h"
+#include "nes.h"

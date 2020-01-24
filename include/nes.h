@@ -7,11 +7,11 @@
 #include "ppu.h"
 #include "cartridge.h"
 
-class Bus
+class NES
 {
 public:
-	Bus();
-	~Bus();
+	NES();
+	~NES();
 
 public:
 	// Data
