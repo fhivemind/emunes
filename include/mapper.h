@@ -11,8 +11,10 @@ public:
 	~Mapper();
 
 public:
-	virtual bool read(u16, u32 &) = 0;
-	virtual bool write(u16, u32 &) = 0;
+	virtual bool cpuRead(u16, u32&) = 0;
+	virtual bool cpuWrite(u16, u32) = 0;
+	virtual bool ppuRead(u16, u32&) = 0;
+	virtual bool ppuWrite(u16, u32) = 0;
 
 protected:
 	u8 prgBanks{0};
