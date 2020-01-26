@@ -190,7 +190,7 @@ void CPU::reset()
 	x = 0;
 	y = 0;
 	stackp = 0xFD;
-	status = 0x00 | U;
+	status = 0x00 | FLAGS::U;
 
 	// Clear
 	addr_rel = 0x0000;
