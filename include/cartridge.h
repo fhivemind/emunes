@@ -39,5 +39,5 @@ public:
 	bool read(u16, u8 &);
 
 	template <typename T>
-	bool write(u16, u8 &);
+	bool write(u16, u8);
 };

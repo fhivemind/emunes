@@ -63,25 +63,39 @@ Cartridge::~Cartridge()
 }
 
 template<typename T>
-inline bool Cartridge::read(u16, u8&)
+inline bool Cartridge::read(u16 addr, u8& data)
 {
+	u32 mapped_addr{ 0 };
 	if constexpr (std::is_same_v<T, CPU>) {
-		// read mapper CPU 
+		if (mapper->cpuRead(addr, mapped_addr)) {
+			data = prgROM.at(mapped_addr);
+			return true;
+		}
 	}
 	else if constexpr (std::is_same_v<T, PPU>) {
-		// read mapper PPU 
+		if (mapper->ppuRead(addr, mapped_addr)) {
+			data = chrROM.at(mapped_addr);
+			return true;
+		}
 	}
 	return false;
 }
 
 template<typename T>
-inline bool Cartridge::write(u16, u8&)
+inline bool Cartridge::write(u16 addr, u8 data)
 {
+	u32 mapped_addr{ 0 };
 	if constexpr (std::is_same_v<T, CPU>) {
-		// write mapper CPU 
+		if (mapper->cpuWrite(addr, mapped_addr)) {
+			prgROM[mapped_addr] = data;
+			return true;
+		}
 	}
 	else if constexpr (std::is_same_v<T, PPU>) {
-		// write mapper PPU 
+		if (mapper->ppuWrite(addr, mapped_addr)) {
+			chrROM[mapped_addr] = data;
+			return true;
+		}
 	}
 	return false;
 }
