@@ -11,13 +11,11 @@ Hardware architecture implementation of Nintendo Entertainment System in C++. Ha
 * Test
 * References
 
----
-
 ## Design
 This will be updated on-the-go.
 
 ## Memory mapping
-#### CPU Memory Map
+### CPU Memory Map
 ```
 --------------------------------------- $10000
  Upper Bank of Cartridge ROM
@@ -33,7 +31,7 @@ This will be updated on-the-go.
  2kB Internal RAM, mirrored 4 times
 --------------------------------------- $0000
 ```
-#### PPU Memory Map
+### PPU Memory Map
 ```
 --------------------------------------- $4000
  Empty
@@ -65,7 +63,7 @@ This will be updated on-the-go.
  Pattern Table 0 (256x2x8, may be VROM)
 --------------------------------------- $0000
 ```
-### iNES File Format
+## iNES File Format
 Specifies how to read the iNES files.
 ```
 Byte     Contents
