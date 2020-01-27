@@ -2,48 +2,43 @@
 #include "cpu.h"
 #include "ppu.h"
 
-// Top-level IO flow
-template<typename T>
-bool Mapper_000::read(u16 addr, u32& data)
-{
-	if constexpr (std::is_same_v<T, CPU>) {
-		return cpuRead(addr, data);
-	}
-	else if constexpr (std::is_same_v<T, PPU>) {
-		return ppuRead(addr, data);
-	}
-	return false;
-}
-
-template<typename T>
-bool Mapper_000::write(u16 addr, u32 data)
-{
-	if constexpr (std::is_same_v<T, CPU>) {
-		return cpuWrite(addr, data);
-	}
-	else if constexpr (std::is_same_v<T, PPU>) {
-		return ppuWrite(addr, data);
-	}
-	return false;
-}
-
 // Default IO flow
-bool Mapper_000::cpuRead(u16, u32&)
+bool Mapper_000::cpuRead(u16 addr, u32& mapped_addr)
 {
+	if (addr >= 0x8000 && addr <= 0xFFFF)
+	{
+		mapped_addr = addr & (prgBanks > 1 ? 0x7FFF : 0x3FFF);
+		return true;
+	}
 	return false;
 }
 
-bool Mapper_000::cpuWrite(u16, u32)
+bool Mapper_000::cpuWrite(u16 addr, u32& mapped_addr)
 {
+	if (addr >= 0x8000 && addr <= 0xFFFF)
+	{
+		mapped_addr = addr & (prgBanks > 1 ? 0x7FFF : 0x3FFF);
+		return true;
+	}
 	return false;
 }
 
-bool Mapper_000::ppuRead(u16, u32&)
+bool Mapper_000::ppuRead(u16 addr, u32& mapped_addr)
 {
+	if (addr >= 0x0000 && addr <= 0x1FFF)
+	{
+		mapped_addr = addr;
+		return true;
+	}
 	return false;
 }
 
-bool Mapper_000::ppuWrite(u16, u32)
+bool Mapper_000::ppuWrite(u16 addr, u32& mapped_addr)
 {
+	if (addr >= 0x0000 && addr <= 0x1FFF)
+	{
+		mapped_addr = addr;
+		return true;
+	}
 	return false;
 }

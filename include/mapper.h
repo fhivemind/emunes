@@ -11,10 +11,16 @@ public:
 	~Mapper();
 
 public:
+	template <typename T>
+	bool read(u16, u32&);
+	template <typename T>
+	bool write(u16, u32&);
+
+public:
 	virtual bool cpuRead(u16, u32&) = 0;
-	virtual bool cpuWrite(u16, u32) = 0;
+	virtual bool cpuWrite(u16, u32&) = 0;
 	virtual bool ppuRead(u16, u32&) = 0;
-	virtual bool ppuWrite(u16, u32) = 0;
+	virtual bool ppuWrite(u16, u32&) = 0;
 
 protected:
 	u8 prgBanks{0};
