@@ -1,3 +1,5 @@
+#include <type_traits>
+
 #include "cartridge.h"
 #include "cpu.h"
 #include "ppu.h"
@@ -50,7 +52,7 @@ Cartridge::Cartridge(const std::string& fileName)
 		// Load appropriate mapper
 		switch (mapperID)
 		{
-			case 0: mapper = &Mapper_000(prgBanks, chrBanks); break;
+			case 0: mapper = std::make_shared<Mapper_000>(prgBanks, chrBanks); break;
 		}
 
 		validImage = true;
@@ -62,40 +64,46 @@ Cartridge::~Cartridge()
 {
 }
 
-template<typename T>
-inline bool Cartridge::read(u16 addr, u8& data)
+template<>
+bool Cartridge::read<CPU>(u16 addr, u8& data)
 {
 	u32 mapped_addr{ 0 };
-	if constexpr (std::is_same_v<T, CPU>) {
-		if (mapper->cpuRead(addr, mapped_addr)) {
-			data = prgROM.at(mapped_addr);
-			return true;
-		}
-	}
-	else if constexpr (std::is_same_v<T, PPU>) {
-		if (mapper->ppuRead(addr, mapped_addr)) {
-			data = chrROM.at(mapped_addr);
-			return true;
-		}
+	if (mapper->cpuRead(addr, mapped_addr)) {
+		data = prgROM.at(mapped_addr);
+		return true;
 	}
 	return false;
 }
 
-template<typename T>
-inline bool Cartridge::write(u16 addr, u8 data)
+template<>
+bool Cartridge::read<PPU>(u16 addr, u8& data)
 {
 	u32 mapped_addr{ 0 };
-	if constexpr (std::is_same_v<T, CPU>) {
-		if (mapper->cpuWrite(addr, mapped_addr)) {
-			prgROM[mapped_addr] = data;
-			return true;
-		}
+	if (mapper->ppuRead(addr, mapped_addr)) {
+		data = chrROM.at(mapped_addr);
+		return true;
 	}
-	else if constexpr (std::is_same_v<T, PPU>) {
-		if (mapper->ppuWrite(addr, mapped_addr)) {
-			chrROM[mapped_addr] = data;
-			return true;
-		}
+	return false;
+}
+
+template<>
+bool Cartridge::write<CPU>(u16 addr, u8 data)
+{
+	u32 mapped_addr{ 0 };
+	if (mapper->cpuWrite(addr, mapped_addr)) {
+		prgROM[mapped_addr] = data;
+		return true;
+	}
+	return false;
+}
+
+template<>
+bool Cartridge::write<PPU>(u16 addr, u8 data)
+{
+	u32 mapped_addr{ 0 };
+	if (mapper->ppuWrite(addr, mapped_addr)) {
+		chrROM[mapped_addr] = data;
+		return true;
 	}
 	return false;
 }

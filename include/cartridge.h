@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <memory>
 
 #include "core.h"
 #include "mapper.h"
@@ -9,6 +10,7 @@
 class Cartridge
 {
 public:
+	Cartridge() = delete;
 	Cartridge(const std::string&);
 	~Cartridge();
 
@@ -30,7 +32,7 @@ private:
 	std::vector<u8> prgROM;
 	std::vector<u8> chrROM;
 
-	Mapper *mapper;
+	std::shared_ptr<Mapper> mapper;
 
 public:
 	inline bool imageValid() { return validImage; }
