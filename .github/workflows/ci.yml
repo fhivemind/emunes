@@ -8,6 +8,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: configure
       run: ./configure
+    - name: lint
+      uses: CyberZHG/github-action-cpp-lint@0.0.2
     - name: make
       run: make
     #- name: make check
