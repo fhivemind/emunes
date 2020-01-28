@@ -17,7 +17,7 @@ private:
 	Cartridge* cartridge;
 
 public:
-	MMU() {}
+	MMU();
 	~MMU();
 
 public:
