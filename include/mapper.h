@@ -4,11 +4,12 @@
 class Mapper
 {
 public:
+	Mapper() = delete;
 	Mapper(u8 _prg, u8 _chr) : prgBanks(_prg),
 							   chrBanks(_chr)
 	{
 	}
-	~Mapper();
+	~Mapper() {}
 
 public:
 	template <typename T>

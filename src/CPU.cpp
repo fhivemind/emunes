@@ -856,7 +856,7 @@ u8 CPU::PLP()
 u8 CPU::ROL()
 {
 	fetch();
-	u16 res = (u16)(fetched << 1) | C();
+	u16 res = (u16)(fetched << 1) | (u16)C();
 
 	C(res & 0xFF00);
 	Z((res & 0x00FF) == 0);

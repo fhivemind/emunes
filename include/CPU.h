@@ -7,31 +7,30 @@
 #include <vector>
 
 #include "core.h"
+#include "mmu.h"
 
-// Include forward MMU
-class MMU;
+// Status register
+enum FLAGS
+{
+	C = (1 << 0),
+	Z = (1 << 1),
+	I = (1 << 2),
+	D = (1 << 3),
+	B = (1 << 4),
+	U = (1 << 5),
+	V = (1 << 6),
+	N = (1 << 7),
+};
 
 class CPU
 {
 public:
+	CPU() = delete;
 	CPU(MMU *);
 	~CPU();
 
 public:
 	// ============================================ Control
-
-	// Status register
-	enum FLAGS
-	{
-		C = (1 << 0),
-		Z = (1 << 1),
-		I = (1 << 2),
-		D = (1 << 3),
-		B = (1 << 4),
-		U = (1 << 5),
-		V = (1 << 6),
-		N = (1 << 7),
-	};
 
 	// Registers
 	inline u8 A() { return a; }
@@ -68,13 +67,13 @@ private:
 
 	// ============================================ Control
 	// MMU link
-	MMU *mmu = nullptr;
+	MMU *mmu;
 	u8 read(u16);
 	void write(u16, u8);
 
 	// Status register control
-	inline u8 getFlag(FLAGS);
-	inline void setFlag(FLAGS, bool);
+	u8 getFlag(FLAGS);
+	void setFlag(FLAGS, bool);
 
 	// Flag helpers
 	inline bool N() { return getFlag(FLAGS::N); }

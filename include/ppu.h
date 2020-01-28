@@ -5,7 +5,8 @@
 class PPU
 {
 public:
-	PPU(MMU*);
+	PPU() = delete;
+	PPU(MMU *);
 	~PPU();
 
 public:
