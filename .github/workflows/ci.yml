@@ -11,9 +11,9 @@ jobs:
     - name: lint
       uses: CyberZHG/github-action-cpp-lint@0.0.2
     - name: make
-      run: ls
+      run: make --version
     - name: make
-      run: make
+      run: make clean && make
     #- name: make check
     #  run: make check
     #- name: make distcheck
